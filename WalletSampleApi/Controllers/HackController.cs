@@ -20,7 +20,7 @@ namespace WalletSampleApi.Controllers
 
         public HackController()
         {
-            client = new MongoClient("mongodb://admin:abcd1234@ds237373.mlab.com:37373/coinwallet");
+            client = new MongoClient("mongodb://admin:A123456@ds139428.mlab.com:39428/coinwallet");
             database = client.GetDatabase("coinwallet");
 
             CoinCollection = database.GetCollection<Coin>("coin");
@@ -42,15 +42,32 @@ namespace WalletSampleApi.Controllers
             //try
             //{
             var ctmWallet = CustomerWalletCollection.Find(x => x.Username == id).FirstOrDefault();
-            var coinprices = CoinCollection.Find(x => true).ToList();
-
-            foreach (var item in ctmWallet.Coins)
+            if (ctmWallet != null)
             {
-                item.USDValue = coinprices.Where(x => x.Symbol == item.Symbol).FirstOrDefault().Sell;
-                item.TotalUSDSellValue = coinprices.Where(x => x.Symbol == item.Symbol).FirstOrDefault().Sell * item.Quantity;
+                var coinprices = CoinCollection.Find(x => true).ToList();
+
+                foreach (var item in ctmWallet.Coins)
+                {
+                    item.USDValue = coinprices.Where(x => x.Symbol == item.Symbol).FirstOrDefault().Sell;
+                    item.TotalUSDSellValue = coinprices.Where(x => x.Symbol == item.Symbol).FirstOrDefault().Sell * item.Quantity;
+                }
+
+                return ctmWallet;
+            }
+            else
+            {
+                CustomerWallet ctmMock = new CustomerWallet()
+                {
+                    _id = Guid.NewGuid().ToString(),
+                    USD = 10000000,
+                    Username = id,
+                    Coins = new List<CustomerCoin>() { },
+                };
+
+                CustomerWalletCollection.InsertOne(ctmMock);
+                return ctmMock;
             }
 
-            return ctmWallet;
             //}
             //catch (Exception)
             //{
@@ -95,11 +112,26 @@ namespace WalletSampleApi.Controllers
             foreach (var item in updateCoin.PriceList)
             {
                 var coinprice = coinprices.Where(c => c.Symbol == item.Symbol).FirstOrDefault();
+                if (coinprice != null)
+                {
+                    coinprice.Buy = item.Buy;
+                    coinprice.Sell = item.Sell;
 
-                coinprice.Buy = item.Buy;
-                coinprice.Sell = item.Sell;
+                    CoinCollection.ReplaceOne(x => x._id == coinprice._id, coinprice);
+                }
+                else
+                {
+                    Coin newcoin = new Coin()
+                    {
+                        _id = Guid.NewGuid().ToString(),
+                        Symbol = item.Symbol,
+                        Sell = item.Sell,
+                        Buy = item.Buy
+                    };
+                    CoinCollection.InsertOne(newcoin);
+                }
 
-                CoinCollection.ReplaceOne(x => x._id == coinprice._id, coinprice);
+
             }
         }
 
@@ -118,5 +150,45 @@ namespace WalletSampleApi.Controllers
             CoinCollection.InsertOne(newcoin);
         }
 
+
+
+
+        //[HttpGet]
+        //public void AddCoinMock()
+        //{
+        //    List<Coin> coins = new List<Coin>()
+        //    {
+        //        new Coin(){_id = Guid.NewGuid().ToString(),Symbol ="Bitcoin",Buy =68.54, Sell =65.15 },
+        //        new Coin(){_id = Guid.NewGuid().ToString(),Symbol ="EOS",Buy =54.12, Sell =53.22 },
+        //        new Coin(){_id = Guid.NewGuid().ToString(),Symbol ="Stellar",Buy =79.15, Sell =77.12 },
+        //        new Coin(){_id = Guid.NewGuid().ToString(),Symbol ="TRON",Buy =97.15, Sell =96.33 },
+        //    };
+
+        //    foreach (var item in coins)
+        //    {
+        //        CoinCollection.InsertOne(item);
+        //    }
+
+        //}
+
+        //[HttpGet]
+        //public void AddCtmMock()
+        //{
+        //    CustomerWallet ctmMock = new CustomerWallet()
+        //    {
+        //        _id = Guid.NewGuid().ToString(),
+        //        USD = 10000000,
+        //        Username = "ake",
+        //        Coins = new List<CustomerCoin>() {
+        //            new CustomerCoin(){  Symbol = "Bitcoin",BuyingRate = 65.15,BuyingAt = DateTime.Now,Quantity =3 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){  Symbol = "Bitcoin",BuyingRate = 63.45,BuyingAt = DateTime.Now,Quantity =2 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){  Symbol = "Stellar",BuyingRate = 78.77,BuyingAt = DateTime.Now,Quantity =5 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){  Symbol = "TRON",BuyingRate = 96.31,BuyingAt = DateTime.Now,Quantity =1 , USDValue =0, TotalUSDSellValue =0 },
+
+        //        },
+        //    };
+
+        //    CustomerWalletCollection.InsertOne(ctmMock);
+        //}
     }
 }
