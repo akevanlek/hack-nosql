@@ -6,14 +6,11 @@ using System.Threading.Tasks;
 
 namespace WalletSampleApi.Models
 {
-    public class CoinPriceUpdate
+    public class Coin
     {
-        public DateTime At { get; set; }
-        public List<CoinPrice> PriceList { get; set; }
-    }
+        [BsonId]
+        public string _id { get; set; }
 
-    public class CoinPrice
-    {      
         public string Symbol { get; set; }
         public double Buy { get; set; }
         public double Sell { get; set; }

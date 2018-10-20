@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,7 +8,10 @@ namespace WalletSampleApi.Models
 {
     public class CustomerWallet
     {
+        [BsonId]
+        public string _id { get; set; }
         public string Username { get; set; }
+        public double USD { get; set; }
         public List<CustomerCoin> Coins { get; set; }
     }
 
@@ -26,5 +30,14 @@ namespace WalletSampleApi.Models
         /// มูลค่าหากแลกเป็น USD ตอนนี้
         /// </summary>
         public double USDValue { get; set; }
+        /// <summary>
+        /// จำนวน coin
+        /// </summary>
+        public double Quantity { get; set; }
+        /// <summary>
+        /// มูลค่าหากแลกเป็น USD ตอนนี้ * Quantity
+        /// </summary>
+        public double TotalUSDSellValue { get; set; }
+
     }
 }
