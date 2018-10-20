@@ -157,7 +157,7 @@ namespace WalletSampleApi.Controllers
 
             var coinprice = CoinCollection.Find(x => x.Symbol == request.Symbol).FirstOrDefault();
 
-            var price = coinprice.Sell * request.Quantity;
+            var price = coinprice.Buy * request.Quantity;
 
             if (ctmWallet.USD >= price)
             {
@@ -166,7 +166,7 @@ namespace WalletSampleApi.Controllers
                     _id = Guid.NewGuid().ToString(),
                     BuyingAt = DateTime.Now,
                     Quantity = request.Quantity,
-                    BuyingRate = coinprice.Sell,
+                    BuyingRate = coinprice.Buy,
                     Symbol = request.Symbol,
                     USDValue = coinprice.Sell,
                     TotalUSDSellValue = coinprice.Sell * request.Quantity,
