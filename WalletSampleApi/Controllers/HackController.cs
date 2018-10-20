@@ -150,8 +150,68 @@ namespace WalletSampleApi.Controllers
             CoinCollection.InsertOne(newcoin);
         }
 
+        [HttpPost]
+        public CustomerCoin BuyCoin([FromBody]BuyCoinRequest request)
+        {
+            var ctmWallet = CustomerWalletCollection.Find(x => x.Username == request.UserName).FirstOrDefault();
+
+            var coinprice = CoinCollection.Find(x => x.Symbol == request.Symbol).FirstOrDefault();
+
+            var price = coinprice.Sell * request.Quantity;
+
+            if (ctmWallet.USD >= price)
+            {
+                CustomerCoin newCoin = new CustomerCoin()
+                {
+                    _id = Guid.NewGuid().ToString(),
+                    BuyingAt = DateTime.Now,
+                    Quantity = request.Quantity,
+                    BuyingRate = coinprice.Sell,
+                    Symbol = request.Symbol,
+                    USDValue = coinprice.Sell,
+                    TotalUSDSellValue = coinprice.Sell * request.Quantity,
+                };
+
+                var customerCoins = ctmWallet.Coins;
+                customerCoins.Add(newCoin);
+
+                ctmWallet.Coins = customerCoins;
+                ctmWallet.USD = ctmWallet.USD - price;
 
 
+                CustomerWalletCollection.ReplaceOne(x => x._id == ctmWallet._id, ctmWallet);
+
+                return newCoin;
+            }
+            else
+            {
+                return new CustomerCoin();
+            }
+        }
+
+        [HttpPost]
+        public CustomerCoin SellCoin([FromBody]SellCoinRequest request)
+        {
+            var ctmWallet = CustomerWalletCollection.Find(x => x.Username == request.UserName).FirstOrDefault();
+            var customerCoin = ctmWallet.Coins.Where(x => x._id == request.CustomerCoinId).FirstOrDefault();
+            var coinprice = CoinCollection.Find(x => x.Symbol == customerCoin.Symbol).FirstOrDefault();
+
+            var price = coinprice.Sell * customerCoin.Quantity;
+
+            var customerCoins = ctmWallet.Coins;
+
+            customerCoins.Remove(customerCoin);
+            ctmWallet.Coins = customerCoins;
+
+            ctmWallet.USD = ctmWallet.USD + price;
+
+            CustomerWalletCollection.ReplaceOne(x => x._id == ctmWallet._id, ctmWallet);
+
+            customerCoin.USDValue = coinprice.Sell;
+            customerCoin.TotalUSDSellValue = coinprice.Sell * customerCoin.Quantity;
+            return customerCoin;
+
+        }
 
         //[HttpGet]
         //public void AddCoinMock()
@@ -180,10 +240,10 @@ namespace WalletSampleApi.Controllers
         //        USD = 10000000,
         //        Username = "ake",
         //        Coins = new List<CustomerCoin>() {
-        //            new CustomerCoin(){  Symbol = "Bitcoin",BuyingRate = 65.15,BuyingAt = DateTime.Now,Quantity =3 , USDValue =0, TotalUSDSellValue =0 },
-        //            new CustomerCoin(){  Symbol = "Bitcoin",BuyingRate = 63.45,BuyingAt = DateTime.Now,Quantity =2 , USDValue =0, TotalUSDSellValue =0 },
-        //            new CustomerCoin(){  Symbol = "Stellar",BuyingRate = 78.77,BuyingAt = DateTime.Now,Quantity =5 , USDValue =0, TotalUSDSellValue =0 },
-        //            new CustomerCoin(){  Symbol = "TRON",BuyingRate = 96.31,BuyingAt = DateTime.Now,Quantity =1 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){ _id = Guid.NewGuid().ToString(), Symbol = "Bitcoin",BuyingRate = 65.15,BuyingAt = DateTime.Now,Quantity =3 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){ _id = Guid.NewGuid().ToString(), Symbol = "Bitcoin",BuyingRate = 63.45,BuyingAt = DateTime.Now,Quantity =2 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){ _id = Guid.NewGuid().ToString(), Symbol = "Stellar",BuyingRate = 78.77,BuyingAt = DateTime.Now,Quantity =5 , USDValue =0, TotalUSDSellValue =0 },
+        //            new CustomerCoin(){ _id = Guid.NewGuid().ToString(), Symbol = "TRON",BuyingRate = 96.31,BuyingAt = DateTime.Now,Quantity =1 , USDValue =0, TotalUSDSellValue =0 },
 
         //        },
         //    };
